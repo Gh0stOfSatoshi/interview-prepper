@@ -56,6 +56,26 @@
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
+
+        /* Interactive Step Cards */
+        .step-card {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .step-card:hover {
+            transform: translateX(4px);
+            border-left-width: 4px;
+        }
+        .step-active {
+            border-left-width: 4px;
+            background-color: rgba(79, 70, 229, 0.1);
+        }
+        .dark .step-active {
+            background-color: rgba(79, 70, 229, 0.2);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
         .tab-btn.active {
             border-bottom: 2px solid #6366f1;
             color: #ffffff;
@@ -90,8 +110,14 @@
             <a href="#tech" class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all hover:bg-slate-100 dark:hover:bg-slate-800" onclick="setActiveNav(this)">
                 <span>🧮</span> Media Math
             </a>
+            <a href="#diagnostics" class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all hover:bg-slate-100 dark:hover:bg-slate-800" onclick="setActiveNav(this)">
+                <span>⚡</span> Diagnostics
+            </a>
             <a href="#leadership" class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all hover:bg-slate-100 dark:hover:bg-slate-800" onclick="setActiveNav(this)">
                 <span>🦁</span> Leadership
+            </a>
+            <a href="#plan" class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all hover:bg-slate-100 dark:hover:bg-slate-800" onclick="setActiveNav(this)">
+                <span>📋</span> 90-Day Plan
             </a>
             <a href="#value" class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all hover:bg-slate-100 dark:hover:bg-slate-800" onclick="setActiveNav(this)">
                 <span>💰</span> Negotiation
@@ -114,20 +140,36 @@
         <a href="#operations" class="block text-lg py-2 border-b border-slate-700" onclick="toggleMobile()">Operations</a>
         <a href="#tactics" class="block text-lg py-2 border-b border-slate-700" onclick="toggleMobile()">Tactics</a>
         <a href="#tech" class="block text-lg py-2 border-b border-slate-700" onclick="toggleMobile()">Media Math</a>
+        <a href="#diagnostics" class="block text-lg py-2 border-b border-slate-700" onclick="toggleMobile()">Diagnostics</a>
         <a href="#leadership" class="block text-lg py-2 border-b border-slate-700" onclick="toggleMobile()">Leadership</a>
+        <a href="#plan" class="block text-lg py-2 border-b border-slate-700" onclick="toggleMobile()">90-Day Plan</a>
+        <a href="#value" class="block text-lg py-2 border-b border-slate-700" onclick="toggleMobile()">Negotiation</a>
     </div>
 
     <main class="flex-1 h-full overflow-y-auto scroll-smooth pt-16 md:pt-0 p-6 md:p-8 space-y-12">
 
         <section id="dashboard" class="animate-fade-in">
-            <div class="mb-6 flex justify-between items-end">
-                <div>
-                    <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white">Executive Overview</h2>
-                    <p class="text-slate-500 dark:text-slate-400 mt-1">Status: <span class="text-emerald-500 font-bold">Ready for Day 1</span></p>
-                </div>
-                <div class="hidden lg:block text-right">
-                    <div class="text-xs text-slate-500 uppercase font-bold">Target</div>
-                    <div class="text-xl font-mono font-bold text-indigo-500">Arm Candy</div>
+            <div class="mb-8">
+                <div class="flex justify-between items-start">
+                    <div class="space-y-3">
+                        <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                            READY FOR: ASSOCIATE DIRECTOR
+                        </div>
+                        <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight leading-tight text-slate-900 dark:text-white">
+                            Strategic Leader.<br>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-cyan-400">Technical Operator.</span>
+                        </h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 max-w-xl leading-relaxed">
+                            9+ years bridging <strong class="text-slate-900 dark:text-white">Account Stewardship</strong> with <strong class="text-slate-900 dark:text-white">Media Intelligence</strong>. 
+                            Proven ability to manage <span class="text-indigo-400 font-bold">$5M+ budgets</span>, 
+                            lead <span class="text-emerald-400 font-bold">multicultural strategy</span>, 
+                            and protect <span class="text-rose-400 font-bold">agency margin</span>.
+                        </p>
+                    </div>
+                    <div class="hidden lg:block text-right">
+                        <div class="text-xs text-slate-500 uppercase font-bold">Target</div>
+                        <div class="text-xl font-mono font-bold text-indigo-500">Arm Candy</div>
+                    </div>
                 </div>
             </div>
 
@@ -135,7 +177,7 @@
                 
                 <div class="md:col-span-2 lg:col-span-2 row-span-2 glass-panel rounded-2xl p-4 flex flex-col">
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Competency Radar</h3>
-                    <div class="flex-1 relative">
+                    <div class="flex-1 relative min-h-[200px]">
                         <canvas id="skillsRadar"></canvas>
                     </div>
                 </div>
@@ -321,31 +363,188 @@
                     </div>
                 </div>
             </div>
+
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl shadow border border-slate-200 dark:border-slate-700 p-6 mt-6">
+                <h4 class="font-bold text-lg mb-6 border-b border-slate-200 dark:border-slate-700 pb-2 text-slate-900 dark:text-white">USH Dynamic Creative Logic</h4>
+                <div class="flex flex-col md:flex-row justify-between items-center text-center space-y-4 md:space-y-0 md:gap-4">
+                    <div class="p-4 bg-slate-100 dark:bg-slate-900 rounded-lg border border-indigo-200 dark:border-indigo-900 w-full md:w-1/3">
+                        <div class="text-2xl mb-2">📡</div>
+                        <h5 class="font-bold text-sm text-indigo-600 dark:text-indigo-400">Signal Loss</h5>
+                        <p class="text-xs text-slate-500 mt-2"><strong>Problem:</strong> Hispanic users traverse English & Spanish sites, fragmenting the pixel signal.</p>
+                    </div>
+                    <div class="hidden md:block text-slate-400 text-xl">➡</div>
+                    <div class="p-4 bg-slate-100 dark:bg-slate-900 rounded-lg border border-indigo-200 dark:border-indigo-900 w-full md:w-1/3">
+                        <div class="text-2xl mb-2">🧠</div>
+                        <h5 class="font-bold text-sm text-indigo-600 dark:text-indigo-400">The D-Tree</h5>
+                        <p class="text-xs text-slate-500 mt-2"><strong>Prospecting:</strong> “Con Ganas De Más” (Brand Equity)<br><strong>Retargeting:</strong> “Device Offers” (Hard Conversion)</p>
+                    </div>
+                    <div class="hidden md:block text-slate-400 text-xl">➡</div>
+                    <div class="p-4 bg-slate-100 dark:bg-slate-900 rounded-lg border border-emerald-200 dark:border-emerald-900 w-full md:w-1/3">
+                        <div class="text-2xl mb-2">✅</div>
+                        <h5 class="font-bold text-sm text-emerald-600 dark:text-emerald-400">Optimization</h5>
+                        <p class="text-xs text-slate-500 mt-2">Map <strong>BOTH</strong> HM & GM floodlights to capture the full conversion path.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="diagnostics">
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                <span class="text-indigo-500">⚡</span> Media Intelligence & Diagnostics
+            </h2>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Troubleshooting logic and strategic frameworks.</p>
+
+            <div class="flex border-b border-slate-300 dark:border-slate-700 mb-6 overflow-x-auto no-scrollbar">
+                <button onclick="switchDiagTab('diag')" id="tab-diag" class="px-6 py-3 text-sm font-bold text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500">Diagnostic Protocol</button>
+                <button onclick="switchDiagTab('meas')" id="tab-meas" class="px-6 py-3 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white">Measurement (MMM vs MTA)</button>
+            </div>
+
+            <div id="content-diag" class="diag-tab-content">
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md border border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="bg-rose-100 dark:bg-rose-900/30 text-rose-600 p-2 rounded-lg font-bold">⚠️ Scenario</div>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">“CPIA Rises 18% QoQ. How do you troubleshoot?”</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-3">
+                            <div class="step-card p-4 bg-slate-50 dark:bg-slate-900 border-l-4 border-slate-300 dark:border-slate-600 hover:border-indigo-500 rounded-r-lg">
+                                <h4 class="font-bold text-sm text-slate-700 dark:text-slate-200">1. Audit Tracking Integrity</h4>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Check Pixel/CAPI match rates. Is the drop real or just signal loss?</p>
+                            </div>
+                            <div class="step-card p-4 bg-slate-50 dark:bg-slate-900 border-l-4 border-slate-300 dark:border-slate-600 hover:border-indigo-500 rounded-r-lg">
+                                <h4 class="font-bold text-sm text-slate-700 dark:text-slate-200">2. Funnel Segmentation</h4>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Is it Upper Funnel (CPM inflation) or Lower Funnel (CVR drop)?</p>
+                            </div>
+                            <div class="step-card p-4 bg-slate-50 dark:bg-slate-900 border-l-4 border-slate-300 dark:border-slate-600 hover:border-indigo-500 rounded-r-lg">
+                                <h4 class="font-bold text-sm text-slate-700 dark:text-slate-200">3. Creative Fatigue</h4>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Check Frequency & CTR. 1H’24 data showed fatigue after 6 weeks.</p>
+                            </div>
+                            <div class="step-card p-4 bg-slate-50 dark:bg-slate-900 border-l-4 border-slate-300 dark:border-slate-600 hover:border-indigo-500 rounded-r-lg">
+                                <h4 class="font-bold text-sm text-slate-700 dark:text-slate-200">4. Auction Pressure</h4>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Did we shift from Max Conversions to tCPA prematurely?</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center p-6 bg-slate-100 dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center">
+                            <div>
+                                <div class="text-4xl mb-2">📉</div>
+                                <p class="text-sm font-mono text-slate-500">Hover each step to explore<br>diagnostic logic.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-meas" class="diag-tab-content hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="p-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border-t-4 border-indigo-500 border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-lg mb-2 text-slate-900 dark:text-white">MMM (Marketing Mix Modeling)</h3>
+                        <div class="inline-block px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-bold rounded mb-4">MACRO STRATEGY</div>
+                        <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+                            <li><strong>Role:</strong> Top-down budget allocation.</li>
+                            <li><strong>Use Case:</strong> Deciding split between TV vs. Digital.</li>
+                            <li><strong>Input:</strong> Aggregate spend, seasonality, economic factors.</li>
+                            <li><strong>Arm Candy View:</strong> “The Strategic Compass.”</li>
+                        </ul>
+                    </div>
+                    <div class="p-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border-t-4 border-emerald-500 border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-lg mb-2 text-slate-900 dark:text-white">MTA (Multi-Touch Attribution)</h3>
+                        <div class="inline-block px-2 py-1 bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded mb-4">TACTICAL OPTIMIZATION</div>
+                        <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+                            <li><strong>Role:</strong> Bottom-up optimization.</li>
+                            <li><strong>Use Case:</strong> Pausing specific keywords or creative assets.</li>
+                            <li><strong>Input:</strong> User-level paths (privacy constrained).</li>
+                            <li><strong>Arm Candy View:</strong> “The Daily Steering Wheel.”</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <section id="leadership">
-            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                <span class="text-indigo-500">🦁</span> Leadership Stories
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                <span class="text-indigo-500">🦁</span> Leadership & Crisis Management
             </h2>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">STAR stories demonstrating resilience and stewardship.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg border-l-4 border-rose-500 relative overflow-hidden group hover:-translate-y-1 transition-transform">
-                    <div class="absolute top-0 right-0 p-4 opacity-10 text-8xl">🌪️</div>
-                    <h3 class="text-xl font-bold text-white mb-4">The Cricket Transition</h3>
-                    <div class="space-y-4 text-sm text-slate-300 relative z-10">
-                        <p><strong class="text-white">Situation:</strong> Two tenured brand leadership members left abruptly.</p>
-                        <p><strong class="text-white">Action:</strong> Stepped up as primary client interface. Initiated direct comms. Led trafficking without hand-holding.</p>
-                        <p><strong class="text-emerald-400">Result:</strong> 4/5 Performance Rating. "Hit the ground running."</p>
+                <div class="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 text-xl mr-4">🌪️</div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">The Cricket Transition</h3>
+                    </div>
+                    <div class="space-y-6 relative pl-4 border-l-2 border-slate-200 dark:border-slate-700">
+                        <div class="relative">
+                            <span class="absolute -left-[13px] top-1 w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600 border-2 border-white dark:border-slate-800"></span>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase">Situation</h4>
+                            <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Two tenured brand leadership members left abruptly, leaving a knowledge vacuum.</p>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute -left-[13px] top-1 w-3 h-3 rounded-full bg-indigo-500 border-2 border-white dark:border-slate-800"></span>
+                            <h4 class="text-xs font-bold text-indigo-500 uppercase">Action</h4>
+                            <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Stepped up as primary client interface. Initiated direct comms. Led trafficking without hand-holding.</p>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute -left-[13px] top-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-800"></span>
+                            <h4 class="text-xs font-bold text-emerald-500 uppercase">Result</h4>
+                            <p class="text-sm text-slate-600 dark:text-slate-300 mt-1"><strong>4/5 Performance Rating.</strong> "Hit the ground running" feedback. Zero service drop-off.</p>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg border-l-4 border-indigo-500 relative overflow-hidden group hover:-translate-y-1 transition-transform">
-                    <div class="absolute top-0 right-0 p-4 opacity-10 text-8xl">🛡️</div>
-                    <h3 class="text-xl font-bold text-white mb-4">Brand Stewardship</h3>
-                    <div class="space-y-4 text-sm text-slate-300 relative z-10">
-                        <p><strong class="text-white">Platform Omission:</strong> Pulled spend from X (Twitter) due to volatility.</p>
-                        <p><strong class="text-white">Vendor Removal:</strong> Excluded Kargo following domain spoofing reports.</p>
-                        <p><strong class="text-emerald-400">Result:</strong> Implemented AT&T Inclusion List & IAS Verification.</p>
+                <div class="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 text-xl mr-4">🛑</div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">Scope Discipline (The “No”)</h3>
                     </div>
+                    <div class="space-y-6 relative pl-4 border-l-2 border-slate-200 dark:border-slate-700">
+                        <div class="relative">
+                            <span class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase">Situation</h4>
+                            <p class="text-sm text-slate-700 dark:text-slate-300 mt-1">Client requested expensive USH animation assets (“CRKT Character Library”) without a media timeline or placement strategy.</p>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-amber-500"></span>
+                            <h4 class="text-xs font-bold text-amber-500 uppercase">Action</h4>
+                            <p class="text-sm text-slate-700 dark:text-slate-300 mt-1">Challenged the request before briefing creatives. <em>“Is it worth spending this money if we don’t have a space for it?”</em> (Source: 1:1 w/ Darby).</p>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-emerald-500"></span>
+                            <h4 class="text-xs font-bold text-emerald-500 uppercase">Result</h4>
+                            <p class="text-sm text-slate-700 dark:text-slate-300 mt-1">Prevented wasted billable hours. Redirected budget to active Q3 Testimonial spots that were actually running.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="plan">
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                <span class="text-indigo-500">📋</span> 90-Day Impact Plan
+            </h2>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">My roadmap for immediate stability and strategic growth.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="p-6 rounded-xl bg-white dark:bg-slate-800 border-t-4 border-indigo-500 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-4">Days 1-30: Audit & Stabilize</h3>
+                    <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+                        <li class="flex gap-2"><span class="text-indigo-500">✓</span> <span><strong>Audit Allocation Logic:</strong> Review current budget splits vs. actual BDI/CDI performance.</span></li>
+                        <li class="flex gap-2"><span class="text-indigo-500">✓</span> <span><strong>Measurement Hygiene:</strong> Validate Pixel/CAPI signal match rates across all landings.</span></li>
+                        <li class="flex gap-2"><span class="text-indigo-500">✓</span> <span><strong>Financial Lock:</strong> Confirm all SOWs and billing recs are clean for the quarter.</span></li>
+                    </ul>
+                </div>
+                <div class="p-6 rounded-xl bg-white dark:bg-slate-800 border-t-4 border-emerald-500 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-4">Days 31-60: Optimize & Train</h3>
+                    <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+                        <li class="flex gap-2"><span class="text-emerald-500">✓</span> <span><strong>Funnel Definitions:</strong> Define KPI roles (Amazon = CPIA, Search = CPA) to stop metric confusion.</span></li>
+                        <li class="flex gap-2"><span class="text-emerald-500">✓</span> <span><strong>Creative Sync:</strong> Establish a “Creative + Media” sync to feed the Advantage+ algorithm.</span></li>
+                        <li class="flex gap-2"><span class="text-emerald-500">✓</span> <span><strong>Mentorship:</strong> Identify one “stretch project” for each junior team member.</span></li>
+                    </ul>
+                </div>
+                <div class="p-6 rounded-xl bg-white dark:bg-slate-800 border-t-4 border-amber-500 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-4">Days 61-90: Scale & Innovate</h3>
+                    <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+                        <li class="flex gap-2"><span class="text-amber-500">✓</span> <span><strong>Testing Roadmap:</strong> Launch structured A/B tests (e.g., Broad vs. Interest on TikTok).</span></li>
+                        <li class="flex gap-2"><span class="text-amber-500">✓</span> <span><strong>Efficiency Layer:</strong> Introduce “Efficiency Testing” roadmap for programmatic partners.</span></li>
+                        <li class="flex gap-2"><span class="text-amber-500">✓</span> <span><strong>Strategic Review:</strong> Present Q+1 optimization strategy based on CYRIS predictive modeling.</span></li>
+                    </ul>
                 </div>
             </div>
         </section>
@@ -384,24 +583,50 @@
         </button>
     </div>
 
-    <div id="scriptModal" class="fixed inset-0 z-[60] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-slate-900 w-full max-w-2xl max-h-[80vh] rounded-2xl shadow-2xl border border-slate-700 flex flex-col">
-            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
-                <h3 class="text-xl font-bold text-white">Teleprompter</h3>
-                <button onclick="toggleScriptModal()" class="text-slate-400 hover:text-white text-2xl">&times;</button>
+    <div id="scriptModal" class="fixed inset-0 z-[60] hidden bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-3xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col border border-slate-200 dark:border-slate-700">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950 rounded-t-2xl">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Interview Teleprompter</h3>
+                    <p class="text-xs text-slate-500 uppercase tracking-wider font-bold mt-1">Live Response Protocols</p>
+                </div>
+                <button onclick="toggleScriptModal()" class="text-slate-400 hover:text-rose-500 text-3xl font-light">&times;</button>
             </div>
-            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="flex-1 overflow-y-auto p-6 space-y-8">
                 <div>
-                    <span class="text-xs font-bold text-indigo-400 uppercase">Tell me about yourself</span>
-                    <p class="text-slate-300 mt-2 text-sm leading-relaxed">"I’m a <strong>hybrid media leader</strong> with 9 years of experience bridging the gap between client strategy and tactical execution. Most recently at <strong>Dieste</strong>, I managed the <strong>Cricket Wireless</strong> account, overseeing a multimillion-dollar full-funnel scope. My sweet spot is <strong>operationalizing complexity</strong>—managing team transitions and optimizing multicultural reach."</p>
+                    <h4 class="sticky top-0 bg-white dark:bg-slate-900 py-2 text-sm font-bold text-indigo-500 uppercase tracking-wide border-b border-indigo-100 dark:border-indigo-900 mb-4">1. The Narrative</h4>
+                    <div class="grid gap-4">
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border-l-4 border-indigo-500">
+                            <p class="text-xs text-slate-400 font-bold mb-1">TELL ME ABOUT YOURSELF</p>
+                            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">“I’m a <strong>hybrid media leader</strong> with 9+ years bridging strategy and execution. At <strong>Dieste</strong>, I managed the <strong>Cricket Wireless</strong> account ($5M+), specifically the complex multicultural flighting across TV, Social, and Sponsorships. My superpower is <strong>operationalizing complexity</strong>—managing team transitions without service drops and protecting margin through rigorous stewardship. I want to bring that ‘Full Stack’ ownership to Arm Candy.”</p>
+                        </div>
+                    </div>
                 </div>
                 <div>
-                    <span class="text-xs font-bold text-emerald-400 uppercase">Why Arm Candy?</span>
-                    <p class="text-slate-300 mt-2 text-sm leading-relaxed">"I love the <strong>'Media Intelligence'</strong> positioning. Specifically, I’m excited about <strong>CYRIS</strong>. Moving from reactive reporting to predictive modeling is exactly where I want to take my career."</p>
+                    <h4 class="sticky top-0 bg-white dark:bg-slate-900 py-2 text-sm font-bold text-rose-500 uppercase tracking-wide border-b border-rose-100 dark:border-rose-900 mb-4">2. Technical Grilling (The Hard Stuff)</h4>
+                    <div class="grid gap-4">
+                        <div class="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-lg border-l-4 border-rose-500">
+                            <p class="text-xs text-rose-600 dark:text-rose-400 font-bold mb-1">SCENARIO: CPIA RISES 18% QOQ</p>
+                            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">“First, I <strong>validate the data</strong>—is it a tracking error or real? Second, I <strong>segment by funnel</strong>—is this an upper-funnel saturation issue or a lower-funnel conversion drop? Third, I check <strong>Creative Fatigue</strong> and Frequency. If those are high, we need to refresh assets. If it’s auction pressure, I re-evaluate our bid strategy (tCPA vs Max Conv).”</p>
+                        </div>
+                        <div class="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-lg border-l-4 border-rose-500">
+                            <p class="text-xs text-rose-600 dark:text-rose-400 font-bold mb-1">EXPLAIN: MMM VS MTA</p>
+                            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">“<strong>MMM (Marketing Mix Modeling)</strong> is strategic and top-down; it tells us <em>how much</em> to spend on TV vs. Social next quarter. <strong>MTA (Multi-Touch Attribution)</strong> is tactical and bottom-up; it tells us <em>which keyword</em> or <em>creative</em> to optimize today. We need both to see the full picture.”</p>
+                        </div>
+                        <div class="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-lg border-l-4 border-rose-500">
+                            <p class="text-xs text-rose-600 dark:text-rose-400 font-bold mb-1">SCENARIO: CLIENT WANTS TIKTOK SHOP (Brand Lift KPI)</p>
+                            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">“I would clarify the objective. If the primary KPI is <strong>Brand Lift</strong>, TikTok Shop is a mismatch because it optimizes for sales, not lift. I’d recommend a <strong>Landing Page</strong> strategy for lift, or setting up a separate test cell for Shop if they really want to test commerce.”</p>
+                        </div>
+                    </div>
                 </div>
                 <div>
-                    <span class="text-xs font-bold text-amber-400 uppercase">Weakness?</span>
-                    <p class="text-slate-300 mt-2 text-sm leading-relaxed">"Early in my career, I was often the 'observer'. Feedback at Inspire pushed me to be more <strong>vocal</strong>. I’ve actively worked on this by forcing myself to lead the 'Why' in client presentations."</p>
+                    <h4 class="sticky top-0 bg-white dark:bg-slate-900 py-2 text-sm font-bold text-amber-500 uppercase tracking-wide border-b border-amber-100 dark:border-amber-900 mb-4">3. Executive Judgment</h4>
+                    <div class="grid gap-4">
+                        <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border-l-4 border-amber-500">
+                            <p class="text-xs text-amber-600 dark:text-amber-400 font-bold mb-1">WEAKNESS / GROWTH AREA</p>
+                            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">“Early on, I was a ‘Great Observer’—excellent at execution but quiet in strategy meetings. I’ve actively worked to be a <strong>Vocal Leader</strong>. For example, with the Cricket BDI/CDI analysis, I didn’t just present the data; I argued for the budget shift from Urban West to the South, and I defended that position to the client.”</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -421,11 +646,11 @@
                 if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                     html.classList.add('dark');
                     themeIcon.textContent = '☀️';
-                    updateCharts(true);
+                    if (window.radarChart) updateCharts(true);
                 } else {
                     html.classList.remove('dark');
                     themeIcon.textContent = '🌙';
-                    updateCharts(false);
+                    if (window.radarChart) updateCharts(false);
                 }
             }
             applyTheme();
@@ -448,6 +673,18 @@
             }
 
             // --- Case Study Logic (Swappable) ---
+            window.switchDiagTab = function(tabId) {
+                ['diag', 'meas'].forEach(id => {
+                    const contentEl = document.getElementById('content-' + id);
+                    const btn = document.getElementById('tab-' + id);
+                    contentEl.classList.add('hidden');
+                    btn.className = 'px-6 py-3 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white';
+                });
+                document.getElementById('content-' + tabId).classList.remove('hidden');
+                const selectedBtn = document.getElementById('tab-' + tabId);
+                selectedBtn.className = 'px-6 py-3 text-sm font-bold text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500';
+            };
+
             window.renderCaseStudy = function(caseId) {
                 // Update Buttons
                 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -599,7 +836,7 @@
                 x: ['2024-02-14', '2024-04-05', '2024-07-12', '2024-11-17', '2024-02-14', '2024-04-05', '2024-11-17', '2024-08-23'],
                 type: 'bar',
                 orientation: 'h',
-                marker: { color: ['#6366f1', '#6366f1', '#6366f1', '#6366f1', '#10b981', '#10b981', '#10b981', '#f59e0b'] },
+                marker: { color: ['#4f46e5', '#4f46e5', '#4f46e5', '#4f46e5', '#10b981', '#10b981', '#10b981', '#f59e0b'] },
                 base: [
                     new Date('2024-02-14').getTime(), new Date('2024-04-05').getTime(), new Date('2024-07-12').getTime(), new Date('2024-11-17').getTime(),
                     new Date('2024-02-14').getTime(), new Date('2024-04-05').getTime(), new Date('2024-11-17').getTime(), new Date('2024-08-23').getTime()
@@ -664,6 +901,7 @@
             });
 
             // Initialize
+            applyTheme();
             renderCaseStudy('cricket');
 
             // Resize Handler
