@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Command Control: Associate Director Briefing</title>
+    
+    <!-- CSS Dependencies -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- React & Babel -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Charting Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 10px; }
+        .dark { color-scheme: dark; }
+        
+        /* Ensure Plotly charts responsive sizing */
+        .js-plotly-plot { width: 100% !important; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- ICON HELPER ---
+        // Dynamically renders Lucide icons from the CDN script
+        const Icon = ({ name, size = 20, className = "" }) => {
+            // Converts PascalCase to kebab-case (e.g. LayoutDashboard -> layout-dashboard)
+            const kebabName = name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+            return (
+                <i 
+                    data-lucide={kebabName} 
+                    style={{ width: size, height: size, minWidth: size }} 
+                    className={`inline-block shrink-0 ${className}`}
+                ></i>
+            );
+        };
+
+        // --- GEMINI API SETUP ---
+        // Note: Insert your actual API key here if you want the AI Simulator to work.
+        const apiKey = ""; 
+
+        const callGemini = async (prompt, systemInstruction) => {
+          try {
+            const response = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [{ parts: [{ text: prompt }] }],
+                  systemInstruction: { parts: [{ text: systemInstruction }] },
+                }),
+              }
+            );
+
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+            const data = await response.json();
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+          } catch (error) {
+            console.error("Gemini API Error:", error);
+            return "Simulation offline. Please provide a valid API key in the code to run locally.";
+          }
+        };
+
+        // --- AI COMPONENTS ---
+
+        const GauntletSimulator = () => {
+          const [messages, setMessages] = useState([
+            { 
+              role: 'ai', 
+              text: "I'm Dre, VP of Media here at Arm Candy. I see you've managed some big budgets for Cricket, but I care about 'Media Intelligence.' Tell me about a time data proved your gut instinct wrong. Be specific." 
+            }
+          ]);
+          const [input, setInput] = useState('');
+          const [loading, setLoading] = useState(false);
+          const scrollRef = useRef(null);
+
+          useEffect(() => {
+            if (scrollRef.current) {
+                scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            }
+            if (window.lucide) window.lucide.createIcons();
+          }, [messages, loading]);
+
+          const handleSend = async () => {
+            if (!input.trim()) return;
+            const userMsg = input;
+            setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+            setInput('');
+            setLoading(true);
+
+            const prompt = `
+              Current Conversation History: ${JSON.stringify(messages)}
+              Candidate's Latest Answer: "${userMsg}"
+              
+              Your Persona: You are Andrea "Dre" Wilson, VP of Media at Arm Candy. You are direct, value transparency, and hate fluff. You are interviewing a candidate for Associate Director.
+              
+              Task:
+              1. Rate the candidate's answer on a scale of 1-10 based on strategic depth and clarity.
+              2. Provide a brief, sharp critique.
+              3. Ask a follow-up question related to Programmatic, DCO, or Team Leadership.
+              
+              Keep it conversational but challenging.
+            `;
+
+            try {
+              const response = await callGemini(prompt, "You are a tough but fair media agency executive conducting a job interview.");
+              setMessages(prev => [...prev, { role: 'ai', text: response }]);
+            } catch (e) {
+              setMessages(prev => [...prev, { role: 'ai', text: "Let's pause. (Network Error)" }]);
+            }
+            setLoading(false);
+          };
+
+          return (
+            <div className="flex flex-col h-full bg-slate-900 rounded-lg overflow-hidden border border-indigo-500/30">
+              <div className="p-4 bg-indigo-950/50 border-b border-indigo-500/30 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Icon name="Bot" className="text-indigo-400" size={20} />
+                  <div>
+                    <h3 className="text-sm font-bold text-white">The Gauntlet</h3>
+                    <p className="text-xs text-indigo-300">Interviewer: Dre (VP Media)</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar" ref={scrollRef}>
+                {messages.map((m, i) => (
+                  <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] p-3 rounded-xl text-sm leading-relaxed ${
+                      m.role === 'user' 
+                        ? 'bg-indigo-600 text-white rounded-br-none' 
+                        : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-bl-none'
+                    }`}>
+                      {m.text}
+                    </div>
+                  </div>
+                ))}
+                {loading && (
+                  <div className="flex justify-start">
+                    <div className="bg-slate-800 p-3 rounded-xl rounded-bl-none border border-slate-700 flex items-center gap-2">
+                      <Icon name="Loader2" className="animate-spin text-indigo-400" size={16} />
+                      <span className="text-xs text-slate-400">Dre is evaluating...</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-3 bg-slate-950 border-t border-slate-800">
+                <div className="flex gap-2">
+                  <input 
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                    placeholder="Type your answer..."
+                    className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                    disabled={loading}
+                  />
+                  <button 
+                    onClick={handleSend}
+                    disabled={loading || !input}
+                    className="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
+                  >
+                    <Icon name="Send" size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        const AICommandCenter = ({ onClose }) => {
+          return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in">
+              <div className="w-full max-w-3xl h-[600px] bg-slate-950 rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-slate-800">
+                <div className="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/50">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 rounded-lg">
+                      <Icon name="Bot" className="text-white" size={20} />
+                    </div>
+                    <h2 className="text-xl font-bold text-white tracking-tight">AI Interview Simulator</h2>
+                  </div>
+                  <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+                    <Icon name="X" size={24} />
+                  </button>
+                </div>
+                <div className="flex-1 p-6 bg-slate-950">
+                    <GauntletSimulator />
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        // --- CHART COMPONENTS ---
+
+        const DashboardHome = ({ isDarkMode, skillsRadarRef }) => (
+          <div className="space-y-8 animate-in">
+            <div className="grid lg:grid-cols-12 gap-8 items-start">
+                <div className="lg:col-span-8 space-y-6">
+                    <div className={`p-6 rounded-2xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                        <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border mb-4 ${isDarkMode ? 'bg-indigo-900/50 text-indigo-300 border-indigo-800' : 'bg-indigo-50 text-indigo-700 border-indigo-200'}`}>
+                            TARGET: ASSOCIATE DIRECTOR
+                        </div>
+                        <h1 className={`text-4xl font-extrabold mb-4 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                            Fernando Salazar
+                        </h1>
+                        <p className={`text-lg leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            9+ years of Tier 1 experience (AT&T/Cricket, Walmart, Kia). 
+                            Bridging <strong>Account Stewardship</strong> with <strong>Media Intelligence</strong>.
+                        </p>
+                        <div className="flex flex-wrap gap-3 mt-6">
+                            <span className={`px-3 py-1 rounded text-xs font-mono font-bold ${isDarkMode ? 'bg-slate-800 text-indigo-400' : 'bg-slate-100 text-indigo-600'}`}>DIESTE (CRICKET)</span>
+                            <span className={`px-3 py-1 rounded text-xs font-mono font-bold ${isDarkMode ? 'bg-slate-800 text-emerald-400' : 'bg-slate-100 text-emerald-600'}`}>MULTICULTURAL / USH</span>
+                            <span className={`px-3 py-1 rounded text-xs font-mono font-bold ${isDarkMode ? 'bg-slate-800 text-amber-400' : 'bg-slate-100 text-amber-600'}`}>CRISIS LEADERSHIP</span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {[
+                            { icon: '🧠', title: 'CYRIS', desc: 'Proprietary Predictive Modeling Platform' },
+                            { icon: '📊', title: 'Business Reality', desc: 'Deep P&L understanding required.' },
+                            { icon: '🌐', title: 'Cross-Trained', desc: 'Fluency across Digital, Retail, & Traditional.' },
+                            { icon: '🛡️', title: 'Stewardship', desc: 'Scope discipline & billing accuracy.' }
+                        ].map((item, idx) => (
+                            <div key={idx} className={`p-5 rounded-xl border text-center transition-all hover:scale-105 cursor-default ${isDarkMode ? 'bg-slate-900 border-slate-800 hover:border-indigo-500/50' : 'bg-white border-slate-200 shadow-sm hover:border-indigo-500/50'}`}>
+                                <div className="text-3xl mb-3">{item.icon}</div>
+                                <h4 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{item.title}</h4>
+                                <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                
+                <div className="lg:col-span-4">
+                    <div className={`rounded-xl shadow-lg border p-6 h-full flex flex-col items-center justify-center ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                        <h3 className={`text-sm font-bold uppercase tracking-widest text-center mb-6 w-full ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Competency Fit</h3>
+                        <div className="relative w-full h-[300px]">
+                            <canvas ref={skillsRadarRef} id="skillsRadar"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        );
+
+        const OperationsGantt = ({ isDarkMode, flightingGanttRef }) => (
+          <div className="space-y-6 animate-in">
+            <div className={`p-6 rounded-xl border overflow-hidden ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Operational Mastery: Flighting</h2>
+                <div ref={flightingGanttRef} id="flightingGantt" style={{width: '100%', height: '400px'}}></div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className={`p-5 rounded-lg border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                    <h4 className="font-bold text-indigo-500 mb-2 text-sm uppercase">Trafficking</h4>
+                    <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Oversight of <strong>Hulu, Peacock, YouTube Select</strong> rotations. Ensuring correct AD-ID mapping for "HBCU Engineering" & "Soccer Moms".
+                    </p>
+                </div>
+                <div className={`p-5 rounded-lg border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                    <h4 className="font-bold text-emerald-500 mb-2 text-sm uppercase">Sponsorships</h4>
+                    <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Direct oversight of <strong>SWAC Championship, Celebration Bowl, NBA</strong> integrations. Balancing "In-Stadium" units with linear.
+                    </p>
+                </div>
+                <div className={`p-5 rounded-lg border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                    <h4 className="font-bold text-amber-500 mb-2 text-sm uppercase">Finance</h4>
+                    <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        <strong>Billing & Actualizations</strong> owner. Using AX for invoice approval and tracking PO numbers to prevent margin leakage.
+                    </p>
+                </div>
+            </div>
+          </div>
+        );
+
+        const TacticalPlaybook = ({ isDarkMode, sunburstChartRef }) => (
+          <div className="space-y-6 animate-in">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div className="lg:col-span-4 space-y-6">
+                    <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Cricket Wireless <br/><span className="text-indigo-500 text-lg font-normal">1H 2024 Strategy</span></h2>
+                    
+                    <div className={`p-4 rounded-lg border-l-4 border-indigo-500 ${isDarkMode ? 'bg-slate-900 border-y border-r border-slate-800' : 'bg-white shadow-sm'}`}>
+                        <h4 className="font-bold text-sm mb-1 text-indigo-500">Multicultural Expansion</h4>
+                        <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>+7% YoY USH spend. TikTok Pulse for high-attention placements.</p>
+                    </div>
+                    
+                    <div className={`p-4 rounded-lg border-l-4 border-emerald-500 ${isDarkMode ? 'bg-slate-900 border-y border-r border-slate-800' : 'bg-white shadow-sm'}`}>
+                        <h4 className="font-bold text-sm mb-1 text-emerald-500">Efficiency Layer</h4>
+                        <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Replaced "ISR" (Reserve) with "ISA" (Auction) on Meta for CPM efficiency.</p>
+                    </div>
+
+                    <div className={`p-4 rounded-lg border-l-4 border-amber-500 ${isDarkMode ? 'bg-slate-900 border-y border-r border-slate-800' : 'bg-white shadow-sm'}`}>
+                        <h4 className="font-bold text-sm mb-1 text-amber-500">Results</h4>
+                        <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Amazon Fire Tablet "Wake Screens" achieved <strong>0.45% CTR</strong>.</p>
+                    </div>
+                </div>
+                <div className="lg:col-span-8">
+                    <div className={`rounded-xl shadow-lg border p-4 flex items-center justify-center overflow-hidden ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                        <div ref={sunburstChartRef} id="sunburstChart" style={{width: '100%', height: '450px'}}></div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        );
+
+        const MediaMath = ({ isDarkMode }) => {
+            const [selectedQuad, setSelectedQuad] = useState('leader');
+            const matrixContent = {
+                'leader': { title: 'Defend (High/High)', desc: 'Market is strong, brand is dominant. Strategy: High SOV to block competitors.' },
+                'growth': { title: 'Invest (Low BDI/High CDI)', desc: 'Category is strong, brand is weak. Strategy: Aggressive conquesting to gain share.' },
+                'brand': { title: 'Maintain (High BDI/Low CDI)', desc: 'Brand is strong, market is weak. Strategy: Category education and loyalty.' },
+                'low': { title: 'Ignore (Low/Low)', desc: 'Low potential. Strategy: Minimal investment, prioritize other regions.' }
+            };
+
+            const metrics = [
+                { label: 'CPM', title: 'Cost Per Mille', def: 'Cost per 1,000 impressions.', ex: '$15 CPM = $15 for 1k views. Reach metric.' },
+                { label: 'CPA', title: 'Cost Per Action', def: 'Cost to acquire a specific conversion.', ex: '$50 CPA target for a new subscriber.' },
+                { label: 'ROAS', title: 'Return on Ad Spend', def: 'Revenue generated for every dollar spent.', ex: '4.0 ROAS = $4 earned for $1 spent.' },
+                { label: 'CPIA', title: 'Cost Per Incr. Action', def: 'Cost of conversions that wouldn\'t happen otherwise.', ex: 'Measured via lift studies.' },
+                { label: 'SOV', title: 'Share of Voice', def: 'Your brand\'s share of market ad inventory.', ex: '85% SOV in Brand Search to block competitors.' },
+                { label: 'CTR', title: 'Click-Through Rate', def: '% of impressions that result in a click.', ex: '0.45% CTR on Fire Tablet.' },
+                { label: 'MER', title: 'Media Efficiency Ratio', def: 'Total Revenue / Total Media Spend.', ex: 'Holistic ecosystem efficiency.' },
+                { label: 'LTV', title: 'Lifetime Value', def: 'Total predicted revenue from a customer.', ex: 'Allows higher CPA if LTV is high.' },
+                { label: 'CAC', title: 'Customer Acq. Cost', def: 'Total Sales & Marketing cost / New Customers.', ex: 'Includes media + creative + agency fees.' },
+                { label: 'CVR', title: 'Conversion Rate', def: '% of clicks that result in a conversion.', ex: 'Low CVR often indicates Landing Page friction.' }
+            ];
+
+            return (
+                <div className="space-y-8 animate-in">
+                    <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Media Math & Diagnostics</h2>
+                    
+                    <div className="mb-4 relative">
+                        <p className={`text-sm mb-4 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                            <span className="flex items-center gap-2"><Icon name="Sparkles" size={14} className="text-indigo-500"/> Scroll horizontally & hover cards.</span>
+                        </p>
+                        <div className="flex gap-4 overflow-x-auto pb-6 pt-2 snap-x custom-scrollbar" style={{scrollBehavior: 'smooth'}}>
+                            {metrics.map((m, i) => (
+                                <div key={i} className={`snap-center shrink-0 w-64 h-40 relative group overflow-hidden rounded-xl border transition-all cursor-default ${isDarkMode ? 'bg-slate-900 border-slate-800 hover:border-indigo-500/50' : 'bg-white border-slate-200 shadow-sm hover:border-indigo-400'}`}>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4 transition-opacity duration-300 group-hover:opacity-0">
+                                        <div className={`text-xs font-bold uppercase mb-2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{m.title}</div>
+                                        <div className={`text-4xl font-mono font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{m.label}</div>
+                                    </div>
+                                    <div className={`absolute inset-0 p-5 flex flex-col justify-center translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out ${isDarkMode ? 'bg-indigo-900/95' : 'bg-indigo-50/95'}`}>
+                                        <div className={`text-xs font-bold mb-2 uppercase ${isDarkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>{m.title}</div>
+                                        <p className={`text-xs leading-relaxed mb-3 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{m.def}</p>
+                                        <div className={`text-[10px] p-2 rounded ${isDarkMode ? 'bg-black/30 text-indigo-200' : 'bg-white text-indigo-600 border border-indigo-100'}`}>
+                                            <strong>Ex:</strong> {m.ex}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                                    <Icon name="Move" size={18} className="text-indigo-500" /> Geo-Strategy: BDI / CDI
+                                </h3>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 h-64">
+                                <button onClick={() => setSelectedQuad('leader')} className={`rounded-lg border flex flex-col items-center justify-center p-2 transition-all ${selectedQuad === 'leader' ? 'bg-emerald-500/20 border-emerald-500 ring-1 ring-emerald-500' : 'border-slate-700 hover:bg-slate-800'}`}>
+                                    <span className="text-emerald-500 font-bold text-sm">High/High</span>
+                                    <span className="text-xs text-slate-400">Defend</span>
+                                </button>
+                                <button onClick={() => setSelectedQuad('growth')} className={`rounded-lg border flex flex-col items-center justify-center p-2 transition-all ${selectedQuad === 'growth' ? 'bg-amber-500/20 border-amber-500 ring-1 ring-amber-500' : 'border-slate-700 hover:bg-slate-800'}`}>
+                                    <span className="text-amber-500 font-bold text-sm">Low/High</span>
+                                    <span className="text-xs text-slate-400">Invest</span>
+                                </button>
+                                <button onClick={() => setSelectedQuad('brand')} className={`rounded-lg border flex flex-col items-center justify-center p-2 transition-all ${selectedQuad === 'brand' ? 'bg-indigo-500/20 border-indigo-500 ring-1 ring-indigo-500' : 'border-slate-700 hover:bg-slate-800'}`}>
+                                    <span className="text-indigo-500 font-bold text-sm">High/Low</span>
+                                    <span className="text-xs text-slate-400">Maintain</span>
+                                </button>
+                                <button onClick={() => setSelectedQuad('low')} className={`rounded-lg border flex flex-col items-center justify-center p-2 transition-all ${selectedQuad === 'low' ? 'bg-slate-600/20 border-slate-500 ring-1 ring-slate-500' : 'border-slate-700 hover:bg-slate-800'}`}>
+                                    <span className="text-slate-500 font-bold text-sm">Low/Low</span>
+                                    <span className="text-xs text-slate-400">Ignore</span>
+                                </button>
+                            </div>
+                            <div className="mt-4 p-4 rounded bg-slate-950/30 border border-slate-800">
+                                <h4 className="font-bold text-white text-sm">{matrixContent[selectedQuad].title}</h4>
+                                <p className="text-xs text-slate-400 mt-1">{matrixContent[selectedQuad].desc}</p>
+                            </div>
+                        </div>
+
+                        <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                            <h3 className={`font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Programmatic Logic</h3>
+                            <div className="space-y-4">
+                                <div className="flex gap-3">
+                                    <span className="text-indigo-500 font-mono text-lg">01</span>
+                                    <div>
+                                        <h4 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Meta ASC (Advantage+)</h4>
+                                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>"Data Feeding" strategy. 20-50 creatives/week required for AI learning.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3">
+                                    <span className="text-indigo-500 font-mono text-lg">02</span>
+                                    <div>
+                                        <h4 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>ISA vs ISR</h4>
+                                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Shifted to Auction (ISA) from Reserve for CPM efficiency.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3">
+                                    <span className="text-indigo-500 font-mono text-lg">03</span>
+                                    <div>
+                                        <h4 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Cookieless</h4>
+                                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Moving to Server-Side Events & CAPI integration.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Diagnostics = ({ isDarkMode }) => {
+            const [activeStep, setActiveStep] = useState(null);
+
+            const steps = [
+                { 
+                    id: 1, title: '1. Audit Tracking Integrity', desc: 'Check Pixel/CAPI match rates. Is the drop real or just signal loss?',
+                    detail: { iconName: 'Activity', color: 'text-indigo-500', headline: "Signal Loss Detector", points: ["Verify CAPI deduplication logic.", "Check for broken GTM triggers.", "Compare Platform vs GA4 conversions."] }
+                },
+                { 
+                    id: 2, title: '2. Funnel Segmentation', desc: 'Is it Upper Funnel (CPM inflation) or Lower Funnel (CVR drop)?',
+                    detail: { iconName: 'Filter', color: 'text-emerald-500', headline: "Funnel Isolation", points: ["High CPM? Check competition/supply.", "Low CTR? Refresh creative.", "Low CVR? Audit Landing Page speed."] }
+                },
+                { 
+                    id: 3, title: '3. Creative Fatigue', desc: 'Check Frequency & CTR. 1H’24 data showed fatigue after 6 weeks.',
+                    detail: { iconName: 'BarChart3', color: 'text-amber-500', headline: "Saturation Check", points: ["Frequency > 4.0? Pause.", "CTR drop < 0.5%? Rotate.", "Launch 'Pattern Interrupt' assets."] }
+                },
+                { 
+                    id: 4, title: '4. Auction Pressure', desc: 'Did we shift from Max Conversions to tCPA prematurely?',
+                    detail: { iconName: 'DollarSign', color: 'text-rose-500', headline: "Bidding Logic", points: ["Ensure >30 conversions/month before tCPA.", "Test 'Max Conversions' to reset liquidity.", "Broaden targeting to lower CPM."] }
+                }
+            ];
+
+            return (
+                <div className="animate-in fade-in duration-500">
+                    <h2 className={`text-2xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Media Intelligence & Diagnostics</h2>
+                    
+                    <div className={`p-8 rounded-xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/50 rounded text-red-500 font-bold mb-6">
+                            <Icon name="ShieldAlert" size={18} />
+                            Scenario: "CPIA Rises 18% QoQ. How do you troubleshoot?"
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-4">
+                                {steps.map((step) => (
+                                    <div 
+                                        key={step.id} 
+                                        onMouseEnter={() => setActiveStep(step)}
+                                        className={`p-4 rounded-lg border transition-all cursor-pointer ${
+                                            activeStep?.id === step.id 
+                                                ? `border-indigo-500 bg-indigo-500/10 ring-1 ring-indigo-500`
+                                                : isDarkMode ? 'bg-slate-800 border-slate-700 hover:border-slate-500' : 'bg-slate-50 border-slate-200 hover:border-indigo-300'
+                                        }`}
+                                    >
+                                        <h4 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{step.title}</h4>
+                                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{step.desc}</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-all duration-300 ${isDarkMode ? 'border-slate-800 bg-slate-950' : 'border-slate-300 bg-slate-50'}`}>
+                                {activeStep ? (
+                                    <div className="text-center animate-in w-full">
+                                        <div className="flex justify-center mb-4"><Icon name={activeStep.detail.iconName} size={48} className={activeStep.detail.color} /></div>
+                                        <h4 className={`text-lg font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{activeStep.detail.headline}</h4>
+                                        <div className="space-y-3 text-left bg-slate-900/50 p-4 rounded-lg border border-slate-800">
+                                            {activeStep.detail.points.map((point, i) => (
+                                                <div key={i} className="flex gap-2 items-start">
+                                                    <Icon name="CheckCircle2" size={14} className={`mt-1 shrink-0 ${activeStep.detail.color}`} />
+                                                    <span className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{point}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center opacity-50">
+                                        <div className="flex justify-center mb-4"><Icon name="TrendingUp" size={48} className="text-slate-500" /></div>
+                                        <p className="text-slate-500 text-sm font-medium">Hover over a step to reveal<br/>diagnostic logic.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Leadership = ({ isDarkMode }) => (
+            <div className="animate-in fade-in duration-500">
+                <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Leadership & Crisis Management</h2>
+                <p className={`text-slate-500 mb-8`}>STAR stories demonstrating resilience and stewardship.</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className={`p-8 rounded-xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-indigo-500/10 rounded-full text-indigo-500"><Icon name="Activity" size={24} /></div>
+                            <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>The Cricket Transition</h3>
+                        </div>
+                        <div className="space-y-4 border-l-2 border-indigo-500 pl-4 ml-2">
+                            <div>
+                                <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">Situation</span>
+                                <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Two tenured brand leadership members left abruptly, leaving a knowledge vacuum.</p>
+                            </div>
+                            <div>
+                                <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">Action</span>
+                                <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Stepped up as primary client interface. Initiated direct comms. Led trafficking without hand-holding.</p>
+                            </div>
+                            <div>
+                                <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Result</span>
+                                <p className={`text-sm mt-1 font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>4/5 Performance Rating. "Hit the ground running" feedback. Zero service drop-off.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={`p-8 rounded-xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-rose-500/10 rounded-full text-rose-500"><Icon name="ShieldAlert" size={24} /></div>
+                            <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Scope Discipline</h3>
+                        </div>
+                        <div className="space-y-4 border-l-2 border-rose-500 pl-4 ml-2">
+                            <div>
+                                <span className="text-xs font-bold text-rose-500 uppercase tracking-wider">Situation</span>
+                                <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Client requested expensive USH animation assets ("CRKT Character Library") without a placement strategy.</p>
+                            </div>
+                            <div>
+                                <span className="text-xs font-bold text-rose-500 uppercase tracking-wider">Action</span>
+                                <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Challenged the request before briefing creatives. "Is it worth spending this money if we don't have a space for it?"</p>
+                            </div>
+                            <div>
+                                <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Result</span>
+                                <p className={`text-sm mt-1 font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>Prevented wasted billable hours. Redirected budget to active Q3 Testimonial spots.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={`p-8 rounded-xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-purple-500/10 rounded-full text-purple-500"><Icon name="Users" size={24} /></div>
+                            <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Diversity Investment</h3>
+                        </div>
+                        <div className="space-y-4 border-l-2 border-purple-500 pl-4 ml-2">
+                            <div>
+                                <span className="text-xs font-bold text-purple-500 uppercase tracking-wider">The Commitment</span>
+                                <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Expanded the Diversity Supplier commitment to <strong className="text-purple-400">5.25%</strong> of the annual budget.</p>
+                            </div>
+                            <div>
+                                <span className="text-xs font-bold text-purple-500 uppercase tracking-wider">The Impact</span>
+                                <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Tangible economic empowerment for minority-owned media partners.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const Plan90Day = ({ isDarkMode }) => (
+            <div className="animate-in fade-in duration-500">
+                <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>90-Day Impact Plan</h2>
+                <p className="text-slate-500 mb-8">My roadmap for immediate stability and strategic growth.</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                        <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Days 1-30: Audit & Stabilize</h3>
+                        <ul className="space-y-3">
+                            {[
+                                { h: 'Audit Allocation Logic', t: 'Review budget splits vs actual BDI/CDI performance.' },
+                                { h: 'Measurement Hygiene', t: 'Validate Pixel/CAPI signal match rates across landings.' },
+                                { h: 'Financial Lock', t: 'Confirm all SOWs and billing recs are clean for the quarter.' }
+                            ].map((item, i) => (
+                                <li key={i} className="flex gap-2">
+                                    <Icon name="CheckCircle2" size={16} className="text-indigo-500 shrink-0 mt-1" />
+                                    <div>
+                                        <span className={`block text-xs font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{item.h}</span>
+                                        <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>{item.t}</span>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                        <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Days 31-60: Optimize & Train</h3>
+                        <ul className="space-y-3">
+                            {[
+                                { h: 'Funnel Definitions', t: 'Define KPI roles (Amazon=CPIA, Search=CPA) to stop metric confusion.' },
+                                { h: 'Creative Sync', t: 'Establish "Creative + Media" sync to feed the Advantage+ algorithm.' },
+                                { h: 'Mentorship', t: 'Identify one "stretch project" for each junior team member.' }
+                            ].map((item, i) => (
+                                <li key={i} className="flex gap-2">
+                                    <Icon name="CheckCircle2" size={16} className="text-emerald-500 shrink-0 mt-1" />
+                                    <div>
+                                        <span className={`block text-xs font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{item.h}</span>
+                                        <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>{item.t}</span>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                        <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Days 61-90: Scale & Innovate</h3>
+                        <ul className="space-y-3">
+                            {[
+                                { h: 'Testing Roadmap', t: 'Launch structured A/B tests (e.g., Broad vs Interest on TikTok).' },
+                                { h: 'Efficiency Layer', t: 'Introduce "Efficiency Testing" roadmap for programmatic partners.' },
+                                { h: 'Strategic Review', t: 'Present Q+1 optimization strategy based on CYRIS predictive modeling.' }
+                            ].map((item, i) => (
+                                <li key={i} className="flex gap-2">
+                                    <Icon name="CheckCircle2" size={16} className="text-amber-500 shrink-0 mt-1" />
+                                    <div>
+                                        <span className={`block text-xs font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{item.h}</span>
+                                        <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>{item.t}</span>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const Negotiation = ({ isDarkMode, salaryChartRef }) => (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-500">
+                <div>
+                    <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Market Value & Negotiation</h2>
+                    <p className="text-slate-500 mb-6">
+                        The gap between the job posting ($125k) and Dallas market reality ($211k) requires a strategy anchored in <strong>"Total Ownership"</strong>.
+                    </p>
+                    <ul className="space-y-4">
+                        <li className="flex items-start gap-3">
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs">1</span>
+                            <span className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}><strong>Re-Anchor to Scope:</strong> You aren't just "supporting." You are owning billing, trafficking oversight, and primary client comms.</span>
+                        </li>
+                        <li className="flex items-start gap-3">
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs">2</span>
+                            <span className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}><strong>Leverage Data:</strong> Glassdoor Median for "Associate Media Director" in Dallas is ~$211k (Total Comp).</span>
+                        </li>
+                        <li className="flex items-start gap-3">
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-white text-xs">3</span>
+                            <span className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}><strong>Variable Comp:</strong> If base is fixed at $150k, negotiate aggressive performance bonuses tied to account growth.</span>
+                        </li>
+                    </ul>
+                </div>
+                <div className={`p-6 rounded-xl border flex flex-col justify-center ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                    <div className="relative w-full h-[300px]">
+                        <canvas ref={salaryChartRef} id="salaryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // --- MAIN APP ---
+
+        const App = () => {
+            const [activeSection, setActiveSection] = useState('dashboard');
+            const [isDarkMode, setIsDarkMode] = useState(true);
+            const [showAI, setShowAI] = useState(false);
+            const [showScript, setShowScript] = useState(false);
+            const [sidebarOpen, setSidebarOpen] = useState(true);
+
+            // Refs
+            const skillsRadarRef = useRef(null);
+            const salaryChartRef = useRef(null);
+            const flightingGanttRef = useRef(null);
+            const sunburstChartRef = useRef(null);
+            const chartInstances = useRef({ radar: null, salary: null });
+
+            const toggleScript = () => setShowScript(!showScript);
+
+            // Initialize Icons when section changes
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            });
+
+            // Handle Theme & Charts
+            useEffect(() => {
+                const html = document.documentElement;
+                if (isDarkMode) html.classList.add('dark'); else html.classList.remove('dark');
+                
+                const timer = setTimeout(() => {
+                    initCharts();
+                }, 100);
+                return () => clearTimeout(timer);
+            }, [activeSection, isDarkMode]);
+
+            const initCharts = () => {
+                const textColor = isDarkMode ? '#e2e8f0' : '#475569';
+                const gridColor = isDarkMode ? '#334155' : '#e2e8f0';
+                
+                if (window.Chart) {
+                    window.Chart.defaults.color = textColor;
+                    window.Chart.defaults.borderColor = gridColor;
+
+                    if (skillsRadarRef.current) {
+                        if (chartInstances.current.radar) chartInstances.current.radar.destroy();
+                        chartInstances.current.radar = new window.Chart(skillsRadarRef.current, {
+                            type: 'radar',
+                            data: {
+                                labels: ['Strategy', 'Financials', 'Tech/Prog', 'Leadership', 'Storytelling'],
+                                datasets: [{
+                                    label: 'Candidate Profile',
+                                    data: [8, 9.5, 8.5, 8, 7],
+                                    fill: true,
+                                    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                                    borderColor: '#6366f1',
+                                    pointBackgroundColor: '#6366f1',
+                                    pointBorderColor: '#fff'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: { r: { ticks: { display: false }, grid: { color: gridColor }, angleLines: { color: gridColor }, pointLabels: { color: textColor } } },
+                                plugins: { legend: { display: false } }
+                            }
+                        });
+                    }
+
+                    if (salaryChartRef.current) {
+                        if (chartInstances.current.salary) chartInstances.current.salary.destroy();
+                        chartInstances.current.salary = new window.Chart(salaryChartRef.current, {
+                            type: 'bar',
+                            data: {
+                                labels: ['Arm Candy Low', 'Arm Candy High', 'Market Base', 'Market Total'],
+                                datasets: [{
+                                    label: 'Comp',
+                                    data: [125000, 150000, 161629, 211000],
+                                    backgroundColor: ['#94a3b8', '#94a3b8', '#6366f1', '#10b981'],
+                                    borderRadius: 4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: { y: { beginAtZero: false, min: 100000, grid: { display: false }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } }
+                            }
+                        });
+                    }
+                }
+
+                if (window.Plotly) {
+                    if (flightingGanttRef.current) {
+                        const ganttData = [{
+                            y: ['GM: Tax Season', 'GM: Sprummer', 'GM: Back to School', 'GM: Holiday', 'USH: Tax Season', 'USH: HHM/Sprummer', 'USH: Holiday', 'AA: HBCU/Sports'],
+                            x: [49*86400000, 97*86400000, 55*86400000, 44*86400000, 49*86400000, 97*86400000, 44*86400000, 112*86400000],
+                            base: [new Date('2024-02-14').getTime(), new Date('2024-04-05').getTime(), new Date('2024-07-12').getTime(), new Date('2024-11-17').getTime(), new Date('2024-02-14').getTime(), new Date('2024-04-05').getTime(), new Date('2024-11-17').getTime(), new Date('2024-08-23').getTime()],
+                            type: 'bar', orientation: 'h', marker: { color: '#6366f1' }
+                        }];
+                        const layout = { margin: { l: 120, r: 20, t: 0, b: 20 }, xaxis: { type: 'date', tickfont: { color: textColor } }, yaxis: { tickfont: { color: textColor } }, paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)' };
+                        window.Plotly.newPlot(flightingGanttRef.current, ganttData, layout, {displayModeBar: false});
+                    }
+
+                    if (sunburstChartRef.current) {
+                        const sunburstData = [{
+                            type: "sunburst",
+                            labels: ["1H 2024 Plan", "Awareness", "Performance", "Innovation", "Prime Video", "Fire Tablet", "Search VBB", "Broad Match", "TikTok Pulse", "Meta ISA"],
+                            parents: ["", "1H 2024 Plan", "1H 2024 Plan", "1H 2024 Plan", "Awareness", "Awareness", "Performance", "Performance", "Innovation", "Innovation"],
+                            values:  [100, 30, 50, 20, 15, 15, 25, 25, 10, 10],
+                            textinfo: "label+percent parent",
+                            marker: {colors: ["#ffffff", "#6366f1", "#10b981", "#f59e0b", "#818cf8", "#a5b4fc", "#34d399", "#6ee7b7", "#fbbf24", "#fcd34d"]}
+                        }];
+                        const layout = { margin: {l: 0, r: 0, b: 0, t: 0}, paper_bgcolor: 'rgba(0,0,0,0)' };
+                        window.Plotly.newPlot(sunburstChartRef.current, sunburstData, layout, {displayModeBar: false});
+                    }
+                }
+            };
+
+            const navItems = [
+                { id: 'dashboard', label: 'Dashboard', iconName: 'LayoutDashboard' },
+                { id: 'ops', label: 'Operations & Gantt', iconName: 'Settings' },
+                { id: 'tactical', label: 'Tactical Playbook', iconName: 'Crosshair' },
+                { id: 'math', label: 'Media Math', iconName: 'Calculator' },
+                { id: 'diagnostics', label: 'Diagnostics', iconName: 'Activity' },
+                { id: 'leadership', label: 'Leadership', iconName: 'Users' },
+                { id: 'plan', label: '90-Day Plan', iconName: 'ClipboardList' },
+                { id: 'negotiation', label: 'Negotiation', iconName: 'DollarSign' },
+            ];
+
+            return (
+                <div className={`flex h-screen overflow-hidden ${isDarkMode ? 'bg-slate-950 text-slate-200' : 'bg-slate-50 text-slate-900'}`}>
+                    
+                    {/* --- AI MODAL --- */}
+                    {showAI && <AICommandCenter onClose={() => setShowAI(false)} />}
+
+                    {/* --- SIDEBAR --- */}
+                    <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} flex-shrink-0 transition-all duration-300 border-r ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} flex flex-col`}>
+                        <div className="h-16 flex items-center px-6 border-b border-slate-800">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold font-mono">FS</div>
+                                {sidebarOpen && <span className="font-bold text-sm">Salazar<span className="opacity-50">Cmd</span></span>}
+                            </div>
+                        </div>
+
+                        <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto custom-scrollbar">
+                            {navItems.map((item) => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setActiveSection(item.id)}
+                                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeSection === item.id 
+                                        ? (isDarkMode ? 'bg-indigo-600 text-white' : 'bg-indigo-100 text-indigo-700')
+                                        : (isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100')}`}
+                                >
+                                    <Icon name={item.iconName} size={20} />
+                                    {sidebarOpen && <span>{item.label}</span>}
+                                </button>
+                            ))}
+                        </nav>
+
+                        <div className="p-4 border-t border-slate-800 space-y-2">
+                            <button 
+                                onClick={() => setShowAI(true)}
+                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500`}
+                            >
+                                <Icon name="Sparkles" size={20} />
+                                {sidebarOpen && <span>AI PREP</span>}
+                            </button>
+                            
+                            <button onClick={() => setIsDarkMode(!isDarkMode)} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'}`}>
+                                <Icon name={isDarkMode ? "Sun" : "Moon"} size={20} />
+                                {sidebarOpen && <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>}
+                            </button>
+                        </div>
+                    </aside>
+
+                    {/* --- MAIN CONTENT --- */}
+                    <main className="flex-1 overflow-y-auto relative scroll-smooth custom-scrollbar">
+                        <div className="max-w-7xl mx-auto p-8">
+                            {/* Section Rendering */}
+                            {activeSection === 'dashboard' && <DashboardHome isDarkMode={isDarkMode} skillsRadarRef={skillsRadarRef} />}
+                            {activeSection === 'ops' && <OperationsGantt isDarkMode={isDarkMode} flightingGanttRef={flightingGanttRef} />}
+                            {activeSection === 'tactical' && <TacticalPlaybook isDarkMode={isDarkMode} sunburstChartRef={sunburstChartRef} />}
+                            {activeSection === 'math' && <MediaMath isDarkMode={isDarkMode} />}
+                            {activeSection === 'diagnostics' && <Diagnostics isDarkMode={isDarkMode} />}
+                            {activeSection === 'leadership' && <Leadership isDarkMode={isDarkMode} />}
+                            {activeSection === 'plan' && <Plan90Day isDarkMode={isDarkMode} />}
+                            {activeSection === 'negotiation' && <Negotiation isDarkMode={isDarkMode} salaryChartRef={salaryChartRef} />}
+                        </div>
+
+                        {/* TELEPROMPTER FLOATING ACTION BUTTON */}
+                        <button 
+                            onClick={toggleScript}
+                            className="fixed bottom-8 right-8 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 font-bold animate-bounce z-50 transition-all hover:scale-105 border border-indigo-400"
+                        >
+                            <Icon name="Mic" size={20} /> <span className="hidden md:inline">Interview Script</span>
+                        </button>
+
+                        {/* SCRIPT MODAL */}
+                        {showScript && (
+                            <div className="fixed inset-0 z-[60] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+                                <div className={`w-full max-w-3xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col border overflow-hidden ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+                                    {/* Modal Header */}
+                                    <div className={`p-6 border-b flex justify-between items-center ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                        <div>
+                                            <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Interview Teleprompter</h3>
+                                            <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mt-1">Live Response Protocols</p>
+                                        </div>
+                                        <button onClick={toggleScript} className="text-slate-400 hover:text-rose-500 transition-colors">
+                                            <Icon name="X" size={28} />
+                                        </button>
+                                    </div>
+
+                                    {/* Modal Content */}
+                                    <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                                        
+                                        {/* Section 1: Narrative */}
+                                        <div>
+                                            <h4 className={`sticky top-0 py-2 text-sm font-bold uppercase tracking-wide border-b mb-4 z-10 ${isDarkMode ? 'bg-slate-900 text-indigo-500 border-indigo-900' : 'bg-white text-indigo-600 border-indigo-100'}`}>
+                                                1. The Narrative
+                                            </h4>
+                                            <div className={`p-4 rounded-lg border-l-4 border-indigo-500 ${isDarkMode ? 'bg-slate-800' : 'bg-indigo-50'}`}>
+                                                <p className="text-xs text-slate-400 font-bold mb-1">TELL ME ABOUT YOURSELF</p>
+                                                <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                    “I’m a <strong>hybrid media leader</strong> with 9+ years bridging strategy and execution. At <strong>Dieste</strong>, I managed the <strong>Cricket Wireless</strong> account ($5M+), specifically the complex multicultural flighting across TV, Social, and Sponsorships. My superpower is <strong>operationalizing complexity</strong>—managing team transitions without service drops and protecting margin through rigorous stewardship. I want to bring that ‘Full Stack’ ownership to Arm Candy.”
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Section 2: Technical Grilling */}
+                                        <div>
+                                            <h4 className={`sticky top-0 py-2 text-sm font-bold uppercase tracking-wide border-b mb-4 z-10 ${isDarkMode ? 'bg-slate-900 text-rose-500 border-rose-900' : 'bg-white text-rose-600 border-rose-100'}`}>
+                                                2. Technical Grilling (The Hard Stuff)
+                                            </h4>
+                                            <div className="grid gap-4">
+                                                <div className={`p-4 rounded-lg border-l-4 border-rose-500 ${isDarkMode ? 'bg-rose-900/20' : 'bg-rose-50'}`}>
+                                                    <p className={`text-xs font-bold mb-1 ${isDarkMode ? 'text-rose-400' : 'text-rose-600'}`}>SCENARIO: CPIA RISES 18% QOQ</p>
+                                                    <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                        “First, I <strong>validate the data</strong>—is it a tracking error or real? Second, I <strong>segment by funnel</strong>—is this an upper-funnel saturation issue or a lower-funnel conversion drop? Third, I check <strong>Creative Fatigue</strong> and Frequency. If those are high, we need to refresh assets. If it’s auction pressure, I re-evaluate our bid strategy (tCPA vs Max Conv).”
+                                                    </p>
+                                                </div>
+                                                <div className={`p-4 rounded-lg border-l-4 border-rose-500 ${isDarkMode ? 'bg-rose-900/20' : 'bg-rose-50'}`}>
+                                                    <p className={`text-xs font-bold mb-1 ${isDarkMode ? 'text-rose-400' : 'text-rose-600'}`}>EXPLAIN: MMM VS MTA</p>
+                                                    <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                        “<strong>MMM (Marketing Mix Modeling)</strong> is strategic and top-down; it tells us <em>how much</em> to spend on TV vs. Social next quarter. <strong>MTA (Multi-Touch Attribution)</strong> is tactical and bottom-up; it tells us <em>which keyword</em> or <em>creative</em> to optimize today. We need both to see the full picture.”
+                                                    </p>
+                                                </div>
+                                                <div className={`p-4 rounded-lg border-l-4 border-rose-500 ${isDarkMode ? 'bg-rose-900/20' : 'bg-rose-50'}`}>
+                                                    <p className={`text-xs font-bold mb-1 ${isDarkMode ? 'text-rose-400' : 'text-rose-600'}`}>SCENARIO: CLIENT WANTS TIKTOK SHOP (Brand Lift KPI)</p>
+                                                    <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                        “I would clarify the objective. If the primary KPI is <strong>Brand Lift</strong>, TikTok Shop is a mismatch because it optimizes for sales, not lift. I’d recommend a <strong>Landing Page</strong> strategy for lift, or setting up a separate test cell for Shop if they really want to test commerce.”
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Section 3: Executive Judgment */}
+                                        <div>
+                                            <h4 className={`sticky top-0 py-2 text-sm font-bold uppercase tracking-wide border-b mb-4 z-10 ${isDarkMode ? 'bg-slate-900 text-amber-500 border-amber-900' : 'bg-white text-amber-600 border-amber-100'}`}>
+                                                3. Executive Judgment
+                                            </h4>
+                                            <div className={`p-4 rounded-lg border-l-4 border-amber-500 ${isDarkMode ? 'bg-amber-900/20' : 'bg-amber-50'}`}>
+                                                <p className={`text-xs font-bold mb-1 ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`}>WEAKNESS / GROWTH AREA</p>
+                                                <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                    “Early on, I was a ‘Great Observer’—excellent at execution but quiet in strategy meetings. I’ve actively worked to be a <strong>Vocal Leader</strong>. For example, with the Cricket BDI/CDI analysis, I didn’t just present the data; I argued for the budget shift from Urban West to the South, and I defended that position to the client.”
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Section 4: Feedback Calibration (Mock Interview Insights) */}
+                                        <div>
+                                            <h4 className={`sticky top-0 py-2 text-sm font-bold uppercase tracking-wide border-b mb-4 z-10 ${isDarkMode ? 'bg-slate-900 text-teal-500 border-teal-900' : 'bg-white text-teal-600 border-teal-100'}`}>
+                                                4. Live Feedback Calibration
+                                            </h4>
+                                            <div className="grid gap-4">
+                                                <div className={`p-4 rounded-lg border-l-4 border-amber-500 ${isDarkMode ? 'bg-amber-900/20' : 'bg-amber-50'}`}>
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <p className={`text-xs font-bold ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`}>TOPIC: PRIORITIZATION</p>
+                                                        <span className="text-[10px] uppercase font-bold bg-amber-500 text-white px-2 py-0.5 rounded">Fix: Be Concise</span>
+                                                    </div>
+                                                    <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                        <strong>Critique:</strong> "Comprehensive but too long."<br/>
+                                                        <strong>The Refinement:</strong> Streamline the 'How.'<br/>
+                                                        <em>"I use a master Operations Gantt to visualize bottlenecks and prioritize based on P&L impact. I ensure expectations are met by being transparent about feasibility."</em>
+                                                    </p>
+                                                </div>
+                                                <div className={`p-4 rounded-lg border-l-4 border-indigo-500 ${isDarkMode ? 'bg-indigo-900/20' : 'bg-indigo-50'}`}>
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <p className={`text-xs font-bold ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>TOPIC: CRISIS PIVOT</p>
+                                                        <span className="text-[10px] uppercase font-bold bg-indigo-500 text-white px-2 py-0.5 rounded">Fix: Show Trade-offs</span>
+                                                    </div>
+                                                    <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                        <strong>Critique:</strong> "Strong example, but needs reflection."<br/>
+                                                        <strong>The Refinement:</strong> Acknowledge the cost of the pivot.<br/>
+                                                        <em>"While pivoting was necessary, pausing Project X created a backlog. It was a calculated trade-off: short-term operational pain for long-term client retention."</em>
+                                                    </p>
+                                                </div>
+                                                <div className={`p-4 rounded-lg border-l-4 border-emerald-500 ${isDarkMode ? 'bg-emerald-900/20' : 'bg-emerald-50'}`}>
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <p className={`text-xs font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>TOPIC: BUDGET ALLOCATION</p>
+                                                        <span className="text-[10px] uppercase font-bold bg-emerald-500 text-white px-2 py-0.5 rounded">Fix: Be Modern</span>
+                                                    </div>
+                                                    <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                        <strong>Critique:</strong> "Solid framework, but needs innovation."<br/>
+                                                        <strong>The Refinement:</strong> Don't just stop at TV vs. Digital.<br/>
+                                                        <em>"In addition to the core mix, I explicitly scan for under-priced attention in emerging channels (Podcasts, Influencers) to ensure we leverage every avenue for impact."</em>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Section 5: Arm Candy Intel (Proprietary Strategy) */}
+                                        <div>
+                                            <h4 className={`sticky top-0 py-2 text-sm font-bold uppercase tracking-wide border-b mb-4 z-10 ${isDarkMode ? 'bg-slate-900 text-cyan-400 border-cyan-900' : 'bg-white text-cyan-600 border-cyan-100'}`}>
+                                                5. Arm Candy Insider Intel
+                                            </h4>
+                                            <div className="grid gap-4">
+                                                <div className={`p-4 rounded-lg border-l-4 border-cyan-500 ${isDarkMode ? 'bg-cyan-900/20' : 'bg-cyan-50'}`}>
+                                                    <p className={`text-xs font-bold mb-1 ${isDarkMode ? 'text-cyan-400' : 'text-cyan-600'}`}>TECH: CYRIS & THE "Y" EQUATION</p>
+                                                    <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                        "I'm impressed by how <strong>CYRIS</strong> moves beyond descriptive metrics. I want to use it to solve for the <strong>'Y' Equation</strong>—predicting business outcomes (Revenue) based on the 'X' (Media Spend) rather than just tracking impressions."
+                                                    </p>
+                                                </div>
+                                                <div className={`p-4 rounded-lg border-l-4 border-indigo-500 ${isDarkMode ? 'bg-indigo-900/20' : 'bg-indigo-50'}`}>
+                                                    <p className={`text-xs font-bold mb-1 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>CULTURE: MVP & THE JUICE</p>
+                                                    <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                        "I align with the <strong>'MVP' (Most Valued Partner)</strong> framework. By empowering my team to grow, they become MVPs for our clients. It proves that even in 2025, the <strong>'juice is worth the squeeze'</strong> when you focus on human-centric, data-led quality."
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
